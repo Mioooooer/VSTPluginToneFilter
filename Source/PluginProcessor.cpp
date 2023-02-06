@@ -24,7 +24,7 @@ ToneFilterAudioProcessor::ToneFilterAudioProcessor()
 {
     filterBuffer = juce::AudioSampleBuffer(1,1);
     tempBuffer = juce::AudioSampleBuffer(1,1);
-    mix = 0;
+    mix = 0.0;
 }
 
 ToneFilterAudioProcessor::~ToneFilterAudioProcessor()
