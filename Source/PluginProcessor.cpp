@@ -19,12 +19,14 @@ ToneFilterAudioProcessor::ToneFilterAudioProcessor()
                       #endif
                        .withOutput ("Output", juce::AudioChannelSet::stereo(), true)
                      #endif
-                       )
+                       ), parameters(*this, nullptr, juce::Identifier("ToneFilterAPVTS"), createParameterLayout())
 #endif
 {
+
+    mixParameter = parameters.getRawParameterValue("mix");//mixParameter is a pointer
     filterBuffer = juce::AudioSampleBuffer(1,1);
     tempBuffer = juce::AudioSampleBuffer(1,1);
-    mix = 0.0;
+    
 }
 
 ToneFilterAudioProcessor::~ToneFilterAudioProcessor()
@@ -37,37 +39,6 @@ const juce::String ToneFilterAudioProcessor::getName() const
     return JucePlugin_Name;
 }
 
-
-float ToneFilterAudioProcessor::getParameter(int index)
-{
-    switch (index) {
-        case mixParam:
-            return mix;
-        default:
-            return 0.0f;
-    }
-}
-
-void ToneFilterAudioProcessor::setParameter (int index, float newValue)
-{
-    switch (index) {
-        case mixParam:
-            mix = newValue;
-            break;
-        default:
-            break;
-    }
-}
-
-const juce::String ToneFilterAudioProcessor::getParameterName (int index)
-{
-    switch (index) {
-        case mixParam:
-            return "Mix";
-        default:
-            return juce::String::String();
-    }
-}
 
 bool ToneFilterAudioProcessor::acceptsMidi() const
 {
@@ -200,18 +171,16 @@ void ToneFilterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
     // interleaved by keeping the same state.
     for (int channel = 0; channel < totalNumInputChannels; ++channel)
     {
-        //const auto mix = m_pParams->RTPC.fMix;
         auto *data = buffer.getWritePointer (channel);
         auto numSamples = buffer.getNumSamples();
         // Pass to tone filter array.
-        //juce::AudioSampleBuffer filterBuffer(1,numSamples);
+        
         auto *outData = filterBuffer.getWritePointer(0);
-        //auto *outData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * numSamples));
+        
         for (auto &&filter : filterMatrix[channel])
         {
-            //juce::AudioSampleBuffer tempBuffer(1,numSamples);
             auto *tempData = tempBuffer.getWritePointer(0);
-            //auto *tempData = static_cast<AkSampleType *>(AK_PLUGIN_ALLOC(m_pAllocator, sizeof(AkSampleType) * numSamples));
+
             filter.process(data, tempData, numSamples);
 
             // Clip sine wave into square.
@@ -225,26 +194,29 @@ void ToneFilterAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer, j
             {
                 outData[i] += tempData[i];
             }
-            //AK_PLUGIN_FREE(m_pAllocator, tempData);
             tempBuffer.clear(0, 0, tempBuffer.getNumSamples());
         }
 
         for (size_t i = 0; i < numSamples; ++i)
         {
+            auto mix = mixParameter->load();
             data[i] = outData[i] * mix + data[i] * (1 - mix);
             //data[i] = outData[i];
         }
-        //AK_PLUGIN_FREE(m_pAllocator, outData);
         filterBuffer.clear(0, 0, filterBuffer.getNumSamples());
     }
 
-    //Ak here to modified
-    //const auto numChannels = io_pBuffer->NumChannels();
-    //const auto numSamples = io_pBuffer->uValidFrames;
-    //const auto mix = m_pParams->RTPC.fMix;
 
 }
 
+//==============================================================================
+juce::AudioProcessorValueTreeState::ParameterLayout ToneFilterAudioProcessor::createParameterLayout()
+{
+    juce::AudioProcessorValueTreeState::ParameterLayout params;
+    params.add(std::make_unique<juce::AudioParameterFloat>("mix", "Mix", juce::NormalisableRange<float>(0.0f, 1.0f, 0.01f), 0.0f));//min max minimal_change default
+
+    return params;
+}
 //==============================================================================
 bool ToneFilterAudioProcessor::hasEditor() const
 {
@@ -253,21 +225,23 @@ bool ToneFilterAudioProcessor::hasEditor() const
 
 juce::AudioProcessorEditor* ToneFilterAudioProcessor::createEditor()
 {
-    return new ToneFilterAudioProcessorEditor (*this);
+    return new ToneFilterAudioProcessorEditor (*this, parameters);
 }
 
 //==============================================================================
 void ToneFilterAudioProcessor::getStateInformation (juce::MemoryBlock& destData)
 {
-    // You should use this method to store your parameters in the memory block.
-    // You could do that either as raw data, or use the XML or ValueTree classes
-    // as intermediaries to make it easy to save and load complex data.
+    auto state = parameters.copyState();
+    std::unique_ptr<juce::XmlElement> xml(state.createXml());
+    copyXmlToBinary(*xml, destData);
 }
 
 void ToneFilterAudioProcessor::setStateInformation (const void* data, int sizeInBytes)
 {
-    // You should use this method to restore your parameters from this memory block,
-    // whose contents will have been created by the getStateInformation() call.
+    std::unique_ptr<juce::XmlElement> xmlState(getXmlFromBinary(data, sizeInBytes));
+    if(xmlState.get() != nullptr)
+        if(xmlState->hasTagName(parameters.state.getType()))
+            parameters.replaceState(juce::ValueTree::fromXml(*xmlState));
 }
 
 //==============================================================================

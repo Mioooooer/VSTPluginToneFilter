@@ -11,27 +11,32 @@
 #include <JuceHeader.h>
 #include "PluginProcessor.h"
 
+typedef juce::AudioProcessorValueTreeState::SliderAttachment SliderAttachment;
+
 //==============================================================================
 /**
 */
-class ToneFilterAudioProcessorEditor  : public juce::AudioProcessorEditor,
-                                        private juce::Slider::Listener
+class ToneFilterAudioProcessorEditor  : public juce::AudioProcessorEditor
 {
 public:
-    ToneFilterAudioProcessorEditor (ToneFilterAudioProcessor&);
+    ToneFilterAudioProcessorEditor (ToneFilterAudioProcessor&, juce::AudioProcessorValueTreeState&);
     ~ToneFilterAudioProcessorEditor() override;
 
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
-    void sliderValueChanged (juce::Slider* slider) override;
+
 
 private:
     // This reference is provided as a quick way for your editor to
     // access the processor object that created it.
     ToneFilterAudioProcessor& audioProcessor;
+
+    juce::AudioProcessorValueTreeState& valueTreeState;
+
     juce::Label mixLabel;
     juce::Slider mixSlider;
+    std::unique_ptr<SliderAttachment> mixAttachment;
 
     ToneFilterAudioProcessor* getProcessor() const
     {

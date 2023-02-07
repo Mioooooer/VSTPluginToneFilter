@@ -10,21 +10,21 @@
 #include "PluginEditor.h"
 
 //==============================================================================
-ToneFilterAudioProcessorEditor::ToneFilterAudioProcessorEditor (ToneFilterAudioProcessor& p)
-    : AudioProcessorEditor (&p), audioProcessor (p),
-      mixLabel("","Mix")
+ToneFilterAudioProcessorEditor::ToneFilterAudioProcessorEditor (ToneFilterAudioProcessor& p, juce::AudioProcessorValueTreeState& vts)
+    : AudioProcessorEditor (&p), audioProcessor (p), valueTreeState(vts)
 {
     // Make sure that before the constructor has finished, you've set the
     // editor's size to whatever you need it to be.
     setSize (200, 200);
     mixSlider.setSliderStyle(juce::Slider::LinearHorizontal);
-    mixSlider.setRange(0.0, 1.0, 0.01);
+    //mixSlider.setRange(0.0, 1.0, 0.01);
     addAndMakeVisible (&mixSlider);
-    mixSlider.addListener (this);
+    mixAttachment.reset(new SliderAttachment(valueTreeState, "mix", mixSlider));
 
+    mixLabel.setText("Mix", juce::dontSendNotification);
     mixLabel.attachToComponent(&mixSlider, false);
     mixLabel.setFont(juce::Font (11.0f));
-
+    
 }
 
 ToneFilterAudioProcessorEditor::~ToneFilterAudioProcessorEditor()
@@ -33,12 +33,6 @@ ToneFilterAudioProcessorEditor::~ToneFilterAudioProcessorEditor()
 
 //==============================================================================
 
-void ToneFilterAudioProcessorEditor::sliderValueChanged(juce::Slider* slider)
-{
-  if (slider == &mixSlider) {
-        getProcessor()->setParameter(ToneFilterAudioProcessor::mixParam, (float) mixSlider.getValue());
-    }
-}
 
 void ToneFilterAudioProcessorEditor::paint (juce::Graphics& g)
 {

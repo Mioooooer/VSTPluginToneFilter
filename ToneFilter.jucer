@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <JUCERPROJECT id="nIqh0A" name="ToneFilter" projectType="audioplug" useAppConfig="0"
-              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1">
+              addUsingNamespaceToJuceHeader="0" displaySplashScreen="1" jucerFormatVersion="1"
+              companyName="Koitsumi" companyEmail="mioquan@outlook.com">
   <MAINGROUP id="fJrmIc" name="ToneFilter">
     <GROUP id="{2DF382E6-F1BE-A349-8526-BF39E938DFE3}" name="Source">
       <FILE id="mhtlOv" name="ToneFilter.h" compile="0" resource="0" file="Source/ToneFilter.h"/>

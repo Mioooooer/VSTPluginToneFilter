@@ -42,10 +42,6 @@ public:
     //==============================================================================
     const juce::String getName() const override;
 
-    //int getNumParameters() override;
-    float getParameter (int index) override;
-    void setParameter (int index, float newValue) override;
-    const juce::String getParameterName (int index) override;
 
     bool acceptsMidi() const override;
     bool producesMidi() const override;
@@ -64,14 +60,12 @@ public:
     void setStateInformation (const void* data, int sizeInBytes) override;
 
     //==============================================================================
-    enum Parameters
-    {
-        mixParam = 0,
-        numParameters
-    };
-    float mix;
+
 
 private:
+    juce::AudioProcessorValueTreeState parameters;
+    juce::AudioProcessorValueTreeState::ParameterLayout createParameterLayout();
+    std::atomic<float>* mixParameter = nullptr;
     juce::AudioSampleBuffer filterBuffer;
     juce::AudioSampleBuffer tempBuffer;
     using FilterArray = std::array<DSP::ToneFilter, 48>;
